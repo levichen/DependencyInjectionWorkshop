@@ -61,22 +61,32 @@ namespace DependencyInjectionWorkshop.Models
         }
     }
 
+    public class FailedCounterForAbTesting : FailedCounter
+    {
+        public FailedCounterForAbTesting()
+        {
+            JoeyClient = new HttpClient() {BaseAddress = new Uri("http://joey.com/")};
+        }
+    }
+
     public class FailedCounter
     {
+        protected HttpClient JoeyClient { get; set; } = new HttpClient() {BaseAddress = new Uri("http://joey.com/")};
+
         public FailedCounter()
         {
         }
 
         public void AddFailedCount(string accountId)
         {
-            var addFailedCountResponse = new HttpClient() {BaseAddress = new Uri("http://joey.com/")}
+            var addFailedCountResponse = JoeyClient
                                          .PostAsJsonAsync("api/failedCounter/Add", accountId).Result;
             addFailedCountResponse.EnsureSuccessStatusCode();
         }
 
         public bool GetAccountIsLocked(string accountId)
         {
-            var isLockedResponse = new HttpClient() {BaseAddress = new Uri("http://joey.com/")}
+            var isLockedResponse = JoeyClient
                                    .PostAsJsonAsync("api/failedCounter/IsLocked", accountId).Result;
 
             isLockedResponse.EnsureSuccessStatusCode();
@@ -87,7 +97,7 @@ namespace DependencyInjectionWorkshop.Models
         public int GetFailedCount(string accountId)
         {
             var failedCountResponse =
-                new HttpClient() {BaseAddress = new Uri("http://joey.com/")}
+                JoeyClient
                     .PostAsJsonAsync("api/failedCounter/GetFailedCount", accountId).Result;
             failedCountResponse.EnsureSuccessStatusCode();
 
@@ -97,7 +107,7 @@ namespace DependencyInjectionWorkshop.Models
 
         public void ResetFailedCount(string accountId)
         {
-            var resetResponse = new HttpClient() {BaseAddress = new Uri("http://joey.com/")}
+            var resetResponse = JoeyClient
                                 .PostAsJsonAsync("api/failedCounter/Reset", accountId).Result;
             resetResponse.EnsureSuccessStatusCode();
         }
@@ -121,24 +131,24 @@ namespace DependencyInjectionWorkshop.Models
         private readonly FailedCounter _failedCounter;
         private readonly NLogAdapter _nLogAdapter;
         private readonly OtpService _otpService;
-        private readonly ProfileDao _profileDao;
+        private readonly IProfile _profile;
         private readonly Sha256Adapter _sha256Adapter;
         private readonly SlackAdapter _slackAdapter;
 
         public AuthenticationService(FailedCounter failedCounter, NLogAdapter nLogAdapter, OtpService otpService,
-            ProfileDao profileDao, Sha256Adapter sha256Adapter, SlackAdapter slackAdapter)
+            IProfile profile, Sha256Adapter sha256Adapter, SlackAdapter slackAdapter)
         {
             _failedCounter = failedCounter;
             _nLogAdapter = nLogAdapter;
             _otpService = otpService;
-            _profileDao = profileDao;
+            _profile = profile;
             _sha256Adapter = sha256Adapter;
             _slackAdapter = slackAdapter;
         }
 
         public AuthenticationService()
         {
-            _profileDao = new ProfileDao();
+            _profile = new ProfileDao();
             _sha256Adapter = new Sha256Adapter();
             _otpService = new OtpService();
             _slackAdapter = new SlackAdapter();
@@ -154,7 +164,7 @@ namespace DependencyInjectionWorkshop.Models
                 throw new FailedTooManyTimesException();
             }
 
-            var passwordFromDb = _profileDao.GetPasswordFromDb(accountId);
+            var passwordFromDb = _profile.GetPassword(accountId);
 
             var hashedPassword = _sha256Adapter.GetHashedPassword(password);
 
