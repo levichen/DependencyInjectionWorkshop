@@ -101,6 +101,14 @@ namespace DependencyInjectionWorkshop.Models
             return failedCount;
         }
     }
+    public class NLogAdapter
+    {
+        public void LogMessage(string message)
+        {
+            var logger = NLog.LogManager.GetCurrentClassLogger();
+            logger.Info(message);
+        }
+    }
 
     public class AuthenticationService
     {
@@ -109,6 +117,7 @@ namespace DependencyInjectionWorkshop.Models
         private readonly OtpService _otpService;
         private readonly SlackAdapter _slackAdapter;
         private readonly FailedCounter _failedCounter;
+        private readonly NLogAdapter _nlogAdapter;
 
         public AuthenticationService()
         {
@@ -117,6 +126,7 @@ namespace DependencyInjectionWorkshop.Models
             _otpService = new OtpService();
             _slackAdapter = new SlackAdapter();
             _failedCounter = new FailedCounter();
+            _nlogAdapter = new NLogAdapter();
         }
 
         public bool Verify(string accountId, string inputPassword, string otp)
@@ -153,15 +163,10 @@ namespace DependencyInjectionWorkshop.Models
         {
             var failedCount = _failedCounter.GetFailedCount(accountId);
             
-            LogMessage($"accountId:{accountId} failed times:{failedCount}");
-        }
-
-        private static void LogMessage(string message)
-        {
-            var logger = NLog.LogManager.GetCurrentClassLogger();
-            logger.Info(message);
+            _nlogAdapter.LogMessage($"accountId:{accountId} failed times:{failedCount}");
         }
     }
+
 
 
     public class FailedTooManyTimesException : Exception
