@@ -61,12 +61,54 @@ namespace DependencyInjectionWorkshop.Models
         }
     }
 
+    public class FailedCounter
+    {
+        public FailedCounter()
+        {
+        }
+
+        public void AddFailedCount(string accountId)
+        {
+            var addFailedCountResponse = new HttpClient() {BaseAddress = new Uri("http://joey.com/")}
+                                         .PostAsJsonAsync("api/failedCounter/Add", accountId).Result;
+            addFailedCountResponse.EnsureSuccessStatusCode();
+        }
+
+        public void ResetFailedCount(string accountId)
+        {
+            var resetResponse = new HttpClient() {BaseAddress = new Uri("http://joey.com/")}
+                                .PostAsJsonAsync("api/failedCounter/Reset", accountId).Result;
+            resetResponse.EnsureSuccessStatusCode();
+        }
+
+        public int GetFailedCount(string accountId, HttpClient httpClient)
+        {
+            var failedCountResponse =
+                httpClient.PostAsJsonAsync("api/failedCounter/GetFailedCount", accountId).Result;
+            failedCountResponse.EnsureSuccessStatusCode();
+
+            var failedCount = failedCountResponse.Content.ReadAsAsync<int>().Result;
+            return failedCount;
+        }
+
+        public bool GetAccountIsLocked(string accountId)
+        {
+            var isLockedResponse = new HttpClient() {BaseAddress = new Uri("http://joey.com/")}
+                                   .PostAsJsonAsync("api/failedCounter/IsLocked", accountId).Result;
+
+            isLockedResponse.EnsureSuccessStatusCode();
+            var isLocked = isLockedResponse.Content.ReadAsAsync<bool>().Result;
+            return isLocked;
+        }
+    }
+
     public class AuthenticationService
     {
         private readonly OtpService _otpService;
         private readonly ProfileDao _profileDao;
         private readonly Sha256Adapter _sha256Adapter;
         private readonly SlackAdapter _slackAdapter;
+        private readonly FailedCounter _failedCounter;
 
         public AuthenticationService()
         {
@@ -74,11 +116,12 @@ namespace DependencyInjectionWorkshop.Models
             _sha256Adapter = new Sha256Adapter();
             _otpService = new OtpService();
             _slackAdapter = new SlackAdapter();
+            _failedCounter = new FailedCounter();
         }
 
         public bool Verify(string accountId, string password, string otp)
         {
-            var isLocked = GetAccountIsLocked(accountId);
+            var isLocked = _failedCounter.GetAccountIsLocked(accountId);
             if (isLocked)
             {
                 throw new FailedTooManyTimesException();
@@ -92,13 +135,13 @@ namespace DependencyInjectionWorkshop.Models
 
             if (passwordFromDb == hashedPassword && otp == currentOtp)
             {
-                ResetFailedCount(accountId);
+                _failedCounter.ResetFailedCount(accountId);
 
                 return true;
             }
             else
             {
-                AddFailedCount(accountId);
+                _failedCounter.AddFailedCount(accountId);
 
                 LogFailedCount(accountId);
 
@@ -108,36 +151,9 @@ namespace DependencyInjectionWorkshop.Models
             }
         }
 
-        private static void AddFailedCount(string accountId)
+        private void LogFailedCount(string accountId)
         {
-            var addFailedCountResponse = new HttpClient() {BaseAddress = new Uri("http://joey.com/")}
-                                         .PostAsJsonAsync("api/failedCounter/Add", accountId).Result;
-            addFailedCountResponse.EnsureSuccessStatusCode();
-        }
-
-        private static bool GetAccountIsLocked(string accountId)
-        {
-            var isLockedResponse = new HttpClient() {BaseAddress = new Uri("http://joey.com/")}
-                                   .PostAsJsonAsync("api/failedCounter/IsLocked", accountId).Result;
-
-            isLockedResponse.EnsureSuccessStatusCode();
-            var isLocked = isLockedResponse.Content.ReadAsAsync<bool>().Result;
-            return isLocked;
-        }
-
-        private static int GetFailedCount(string accountId, HttpClient httpClient)
-        {
-            var failedCountResponse =
-                httpClient.PostAsJsonAsync("api/failedCounter/GetFailedCount", accountId).Result;
-            failedCountResponse.EnsureSuccessStatusCode();
-
-            var failedCount = failedCountResponse.Content.ReadAsAsync<int>().Result;
-            return failedCount;
-        }
-
-        private static void LogFailedCount(string accountId)
-        {
-            var failedCount = GetFailedCount(accountId, new HttpClient() {BaseAddress = new Uri("http://joey.com/")});
+            var failedCount = _failedCounter.GetFailedCount(accountId, new HttpClient() {BaseAddress = new Uri("http://joey.com/")});
 
             LogMessage($"accountId:{accountId} failed times:{failedCount}");
         }
@@ -146,13 +162,6 @@ namespace DependencyInjectionWorkshop.Models
         {
             var logger = NLog.LogManager.GetCurrentClassLogger();
             logger.Info(message);
-        }
-
-        private static void ResetFailedCount(string accountId)
-        {
-            var resetResponse = new HttpClient() {BaseAddress = new Uri("http://joey.com/")}
-                                .PostAsJsonAsync("api/failedCounter/Reset", accountId).Result;
-            resetResponse.EnsureSuccessStatusCode();
         }
     }
 
