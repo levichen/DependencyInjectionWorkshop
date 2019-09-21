@@ -55,22 +55,16 @@ namespace DependencyInjectionWorkshop.Models
             else
             {
                 _failedCounter.AddFailedCount(accountId);
-                LogFailedCount(accountId);
+                
+                var failedCount = _failedCounter.GetFailedCount(accountId);
+                _logger.Info($"accountId:{accountId} failed times:{failedCount}");
+                
                 _slackAdapter.Send(accountId);
 
                 return false;
             } 
         }
-
-        private void LogFailedCount(string accountId)
-        {
-            var failedCount = _failedCounter.GetFailedCount(accountId);
-            
-            _logger.Info($"accountId:{accountId} failed times:{failedCount}");
-        }
     }
-
-
 
     public class FailedTooManyTimesException : Exception
     {
