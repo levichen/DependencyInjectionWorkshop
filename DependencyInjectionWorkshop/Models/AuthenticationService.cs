@@ -1,30 +1,11 @@
 ﻿using System;
-using System.Data;
-using System.Data.SqlClient;
-using System.Linq;
 using System.Net.Http;
 using System.Text;
-using Dapper;
+using DependencyInjectionWorkshop.Repos;
 using SlackAPI;
 
 namespace DependencyInjectionWorkshop.Models
 {
-    public class ProfileDao
-    {
-        public string GetPasswordFromDb(string accountId)
-        {
-            string passwordFromDb;
-
-            using (var connection = new SqlConnection("my connection string"))
-            {
-                passwordFromDb = connection.Query<string>("spGetUserPassword", new {Id = accountId},
-                    commandType: CommandType.StoredProcedure).SingleOrDefault();
-            }
-
-            return passwordFromDb;
-        }
-    }
-    
     public class Sha256Adapter
     {
         public string GetHashedInputPassword(string inputPassword)
@@ -112,16 +93,16 @@ namespace DependencyInjectionWorkshop.Models
 
     public class AuthenticationService
     {
-        private readonly ProfileDao _profileDao;
+        private readonly IProfile _profile;
         private readonly Sha256Adapter _sha256Adapter;
         private readonly OtpService _otpService;
         private readonly SlackAdapter _slackAdapter;
         private readonly FailedCounter _failedCounter;
         private readonly NLogAdapter _nlogAdapter;
 
-        public AuthenticationService(ProfileDao profileDao, Sha256Adapter sha256Adapter, OtpService otpService, SlackAdapter slackAdapter, FailedCounter failedCounter, NLogAdapter nlogAdapter)
+        public AuthenticationService(IProfile profile, Sha256Adapter sha256Adapter, OtpService otpService, SlackAdapter slackAdapter, FailedCounter failedCounter, NLogAdapter nlogAdapter)
         {
-            _profileDao = profileDao;
+            _profile = profile;
             _sha256Adapter = sha256Adapter;
             _otpService = otpService;
             _slackAdapter = slackAdapter;
@@ -131,7 +112,7 @@ namespace DependencyInjectionWorkshop.Models
 
         public AuthenticationService()
         {
-            _profileDao = new ProfileDao();
+            _profile = new ProfileDao();
             _sha256Adapter = new Sha256Adapter();
             _otpService = new OtpService();
             _slackAdapter = new SlackAdapter();
@@ -148,7 +129,7 @@ namespace DependencyInjectionWorkshop.Models
                 throw new FailedTooManyTimesException();
             }
             
-            var passwordFromDb = _profileDao.GetPasswordFromDb(accountId);
+            var passwordFromDb = _profile.GetPassword(accountId);
             var hashedInputPassword = _sha256Adapter.GetHashedInputPassword(inputPassword);
             var currentOtp = _otpService.GetCurrentOtp(accountId);
 
