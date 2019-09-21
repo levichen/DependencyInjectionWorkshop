@@ -41,9 +41,9 @@ namespace DependencyInjectionWorkshop.Models
             return hashedInputPassword;
         }
     }
-    
-    
-    internal class OtpService
+
+
+    public class OtpService
     {
         public string GetCurrentOtp(string accountId, HttpClient httpClient)
         {
@@ -57,9 +57,9 @@ namespace DependencyInjectionWorkshop.Models
             return currentOtp;
         }
     }
-    
-    
-    internal class SlackAdapter
+
+
+    public class SlackAdapter
     {
         public void Notify(string accountId)
         {
