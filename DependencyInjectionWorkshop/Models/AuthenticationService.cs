@@ -14,8 +14,9 @@ namespace DependencyInjectionWorkshop.Models
         public bool Verify(string accountId, string inputPassword, string otp)
         {
             HttpClient httpClient = new HttpClient() {BaseAddress = new Uri("http://joey.com/")};
+            
+            // check is lock before verify
             var isLockedResponse = httpClient.PostAsJsonAsync("api/failedCounter/IsLocked", accountId).Result;
-
             isLockedResponse.EnsureSuccessStatusCode();
             if (isLockedResponse.Content.ReadAsAsync<bool>().Result)
             {
@@ -52,6 +53,7 @@ namespace DependencyInjectionWorkshop.Models
 
             if (passwordFromDb == hashedInputPassword && otp == currentOtp)
             {
+                // login success, reset failed counter
                 var resetResponse = httpClient.PostAsJsonAsync("api/failedCounter/Reset", accountId).Result;
                 resetResponse.EnsureSuccessStatusCode();
                 
@@ -59,11 +61,23 @@ namespace DependencyInjectionWorkshop.Models
             }
             else
             {
-                var slackClient = new SlackClient("my api token");
-                slackClient.PostMessage(response1 => { }, "my channel", $"{accountId} try to login failed", "my bot name");
-                
+                // add failed count
                 var addFailedCountResponse = httpClient.PostAsJsonAsync("api/failedCounter/Add", accountId).Result;
                 addFailedCountResponse.EnsureSuccessStatusCode();
+                
+                // log failed count
+                var failedCountResponse =
+                    httpClient.PostAsJsonAsync("api/failedCounter/GetFailedCount", accountId).Result;
+
+                failedCountResponse.EnsureSuccessStatusCode();
+
+                var failedCount = failedCountResponse.Content.ReadAsAsync<int>().Result;
+                var logger = NLog.LogManager.GetCurrentClassLogger();
+                logger.Info($"accountId:{accountId} failed times:{failedCount}");
+                
+                // login failed send slack notification
+                var slackClient = new SlackClient("my api token");
+                slackClient.PostMessage(response1 => { }, "my channel", $"{accountId} try to login failed", "my bot name");
                 
                 return false;
             } 
