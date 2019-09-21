@@ -41,16 +41,34 @@ namespace DependencyInjectionWorkshop.Models
             return hashedInputPassword;
         }
     }
+    
+    
+    internal class OtpService
+    {
+        public string GetCurrentOtp(string accountId, HttpClient httpClient)
+        {
+            var response = httpClient.PostAsJsonAsync("api/otps", accountId).Result;
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"web api error, accountId:{accountId}");
+            }
+
+            var currentOtp = response.Content.ReadAsAsync<string>().Result;
+            return currentOtp;
+        }
+    }
 
     public class AuthenticationService
     {
         private readonly ProfileDao _profileDao;
         private readonly Sha256Adapter _sha256Adapter;
+        private readonly OtpService _otpService;
 
         public AuthenticationService()
         {
             _profileDao = new ProfileDao();
             _sha256Adapter = new Sha256Adapter();
+            _otpService = new OtpService();
         }
 
         public bool Verify(string accountId, string inputPassword, string otp)
@@ -66,7 +84,7 @@ namespace DependencyInjectionWorkshop.Models
             
             var passwordFromDb = _profileDao.GetPasswordFromDb(accountId);
             var hashedInputPassword = _sha256Adapter.GetHashedInputPassword(inputPassword);
-            var currentOtp = GetCurrentOtp(accountId, httpClient);
+            var currentOtp = _otpService.GetCurrentOtp(accountId, httpClient);
 
             if (passwordFromDb == hashedInputPassword && otp == currentOtp)
             {
@@ -127,18 +145,6 @@ namespace DependencyInjectionWorkshop.Models
             resetResponse.EnsureSuccessStatusCode();
         }
 
-        private static string GetCurrentOtp(string accountId, HttpClient httpClient)
-        {
-            var response = httpClient.PostAsJsonAsync("api/otps", accountId).Result;
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new Exception($"web api error, accountId:{accountId}");
-            }
-
-            var currentOtp = response.Content.ReadAsAsync<string>().Result;
-            return currentOtp;
-        }
-
         private static bool GetAccountIsLocked(string accountId, HttpClient httpClient)
         {
             var isLockedResponse = httpClient.PostAsJsonAsync("api/failedCounter/IsLocked", accountId).Result;
@@ -147,6 +153,7 @@ namespace DependencyInjectionWorkshop.Models
             return isLocked;
         }
     }
+
 
 
     public class FailedTooManyTimesException : Exception
