@@ -46,7 +46,6 @@ namespace DependencyInjectionWorkshopTests
             ShouldBeValid(isValid);
         }
         
-        
         private static void ShouldBeValid(bool isValid)
         {
             Assert.IsTrue(isValid);
