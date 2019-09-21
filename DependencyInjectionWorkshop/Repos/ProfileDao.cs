@@ -7,12 +7,12 @@ namespace DependencyInjectionWorkshop.Repos
 {
     public interface IProfile
     {
-        string GetPasswordFromDb(string accountId);
+        string GetPassword(string accountId);
     }
 
     public class ProfileDao : IProfile
     {
-        public string GetPasswordFromDb(string accountId)
+        public string GetPassword(string accountId)
         {
             string passwordFromDb;
 
