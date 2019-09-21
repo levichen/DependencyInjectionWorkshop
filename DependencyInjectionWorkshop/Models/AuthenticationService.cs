@@ -5,21 +5,21 @@ namespace DependencyInjectionWorkshop.Models
 {
     public class AuthenticationService
     {
-        private readonly IProfile _profile;
-        private readonly IHash _hash;
-        private readonly IOtpService _otpService;
-        private readonly INotification _slackAdapter;
         private readonly IFailedCounter _failedCounter;
+        private readonly IHash _hash;
         private readonly ILogger _logger;
+        private readonly INotification _notification;
+        private readonly IOtpService _otpService;
+        private readonly IProfile _profile;
 
-        public AuthenticationService(IProfile profile, IHash hash, IOtpService otpService, INotification slackAdapter, IFailedCounter failedCounter, ILogger logger)
+        public AuthenticationService(IFailedCounter failedCounter, ILogger logger, IOtpService otpService, IProfile profile, IHash hash, INotification notification)
         {
-            _profile = profile;
-            _hash = hash;
-            _otpService = otpService;
-            _slackAdapter = slackAdapter;
             _failedCounter = failedCounter;
             _logger = logger;
+            _otpService = otpService;
+            _profile = profile;
+            _hash = hash;
+            _notification = notification;
         }
 
         public AuthenticationService()
@@ -27,7 +27,7 @@ namespace DependencyInjectionWorkshop.Models
             _profile = new ProfileDao();
             _hash = new Sha256Adapter();
             _otpService = new OtpService();
-            _slackAdapter = new SlackAdapter();
+            _notification = new SlackAdapter();
             _failedCounter = new FailedCounter();
             _logger = new NLogAdapter();
         }
@@ -48,7 +48,7 @@ namespace DependencyInjectionWorkshop.Models
             if (passwordFromDb == hashedInputPassword && otp == currentOtp)
             {
                 // login success, reset failed counter
-                _failedCounter.ResetFailedCounter(accountId);
+                _failedCounter.ResetFailedCount(accountId);
 
                 return true;
             }
@@ -59,7 +59,7 @@ namespace DependencyInjectionWorkshop.Models
                 var failedCount = _failedCounter.GetFailedCount(accountId);
                 _logger.Info($"accountId:{accountId} failed times:{failedCount}");
                 
-                _slackAdapter.Send(accountId);
+                _notification.Send(accountId);
 
                 return false;
             } 
