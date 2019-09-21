@@ -9,8 +9,26 @@ using SlackAPI;
 
 namespace DependencyInjectionWorkshop.Models
 {
+    public class ProfileDao
+    {
+        public string GetPasswordFromDb(string accountId)
+        {
+            string passwordFromDb;
+
+            using (var connection = new SqlConnection("my connection string"))
+            {
+                passwordFromDb = connection.Query<string>("spGetUserPassword", new {Id = accountId},
+                    commandType: CommandType.StoredProcedure).SingleOrDefault();
+            }
+
+            return passwordFromDb;
+        }
+    }
+
     public class AuthenticationService
     {
+        private readonly ProfileDao _profileDao = new ProfileDao();
+
         public bool Verify(string accountId, string inputPassword, string otp)
         {
             HttpClient httpClient = new HttpClient() {BaseAddress = new Uri("http://joey.com/")};
@@ -22,7 +40,7 @@ namespace DependencyInjectionWorkshop.Models
                 throw new FailedTooManyTimesException();
             }
             
-            var passwordFromDb = GetPasswordFromDb(accountId);
+            var passwordFromDb = _profileDao.GetPasswordFromDb(accountId);
             var hashedInputPassword = GetHashedInputPassword(inputPassword);
             var currentOtp = GetCurrentOtp(accountId, httpClient);
 
@@ -52,8 +70,14 @@ namespace DependencyInjectionWorkshop.Models
         private static void LogFailedCount(string accountId, HttpClient httpClient)
         {
             var failedCount = GetFailedCount(accountId, httpClient);
+            
+            LogMessage($"accountId:{accountId} failed times:{failedCount}");
+        }
+
+        private static void LogMessage(string message)
+        {
             var logger = NLog.LogManager.GetCurrentClassLogger();
-            logger.Info($"accountId:{accountId} failed times:{failedCount}");
+            logger.Info(message);
         }
 
         private static int GetFailedCount(string accountId, HttpClient httpClient)
@@ -111,19 +135,6 @@ namespace DependencyInjectionWorkshop.Models
             isLockedResponse.EnsureSuccessStatusCode();
             bool isLocked = isLockedResponse.Content.ReadAsAsync<bool>().Result;
             return isLocked;
-        }
-
-        private static string GetPasswordFromDb(string accountId)
-        {
-            string passwordFromDb;
-
-            using (var connection = new SqlConnection("my connection string"))
-            {
-                passwordFromDb = connection.Query<string>("spGetUserPassword", new {Id = accountId},
-                    commandType: CommandType.StoredProcedure).SingleOrDefault();
-            }
-
-            return passwordFromDb;
         }
     }
 
