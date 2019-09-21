@@ -45,9 +45,9 @@ namespace DependencyInjectionWorkshop.Models
 
     public class OtpService
     {
-        public string GetCurrentOtp(string accountId, HttpClient httpClient)
+        public string GetCurrentOtp(string accountId)
         {
-            var response = httpClient.PostAsJsonAsync("api/otps", accountId).Result;
+            var response = new HttpClient() {BaseAddress = new Uri("http://joey.com/")}.PostAsJsonAsync("api/otps", accountId).Result;
             if (!response.IsSuccessStatusCode)
             {
                 throw new Exception($"web api error, accountId:{accountId}");
@@ -85,10 +85,8 @@ namespace DependencyInjectionWorkshop.Models
 
         public bool Verify(string accountId, string inputPassword, string otp)
         {
-            HttpClient httpClient = new HttpClient() {BaseAddress = new Uri("http://joey.com/")};
-            
             // check is lock before verify
-            var isLocked = GetAccountIsLocked(accountId, httpClient);
+            var isLocked = GetAccountIsLocked(accountId, new HttpClient() {BaseAddress = new Uri("http://joey.com/")});
             if (isLocked)
             {
                 throw new FailedTooManyTimesException();
@@ -96,19 +94,19 @@ namespace DependencyInjectionWorkshop.Models
             
             var passwordFromDb = _profileDao.GetPasswordFromDb(accountId);
             var hashedInputPassword = _sha256Adapter.GetHashedInputPassword(inputPassword);
-            var currentOtp = _otpService.GetCurrentOtp(accountId, httpClient);
+            var currentOtp = _otpService.GetCurrentOtp(accountId);
 
             if (passwordFromDb == hashedInputPassword && otp == currentOtp)
             {
                 // login success, reset failed counter
-                ResetFailedCounter(accountId, httpClient);
+                ResetFailedCounter(accountId, new HttpClient() {BaseAddress = new Uri("http://joey.com/")});
 
                 return true;
             }
             else
             {
-                AddFailedCount(accountId, httpClient);
-                LogFailedCount(accountId, httpClient);
+                AddFailedCount(accountId, new HttpClient() {BaseAddress = new Uri("http://joey.com/")});
+                LogFailedCount(accountId, new HttpClient() {BaseAddress = new Uri("http://joey.com/")});
                 _slackAdapter.Notify(accountId);
 
                 return false;
