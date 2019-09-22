@@ -20,7 +20,6 @@ namespace MyConsole
 
             _authentication = _container.Resolve<IAuthentication>();
 
-
             var isValid = _authentication.Verify("joey", "abc", "wrong otp");
             Console.WriteLine($"result:{isValid}");
         }
@@ -40,12 +39,31 @@ namespace MyConsole
             builder.RegisterDecorator<NotificationDecorator, IAuthentication>();
             builder.RegisterDecorator<FailedCounterDecorator, IAuthentication>();
             builder.RegisterDecorator<LogFailedCountDecorator, IAuthentication>();
+            builder.RegisterDecorator<LogMethodInfoDecorator, IAuthentication>();
 
             //_authentication = new NotificationDecorator(_authentication, _notification);
             //_authentication = new FailedCounterDecorator(_authentication, _failedCounter);
             //_authentication = new LogFailedCountDecorator(_authentication, _logger, _failedCounter);
             var container = builder.Build();
             _container = container;
+        }
+    }
+
+    internal class LogMethodInfoDecorator : AuthenticationBaseDecorator
+    {
+        private readonly ILogger _logger;
+
+        public LogMethodInfoDecorator(IAuthentication authentication, ILogger logger) : base(authentication)
+        {
+            _logger = logger;
+        }
+
+        public override bool Verify(string accountId, string password, string otp)
+        {
+            _logger.Info($"{accountId} | {password} | {otp}");
+            var isValid = base.Verify(accountId, password, otp);
+            _logger.Info($"isValid:{isValid}");
+            return isValid;
         }
     }
 
