@@ -10,7 +10,7 @@ using DependencyInjectionWorkshop.Repos;
 namespace MyConsole
 {
 
-class Program
+    class Program
     {
         private static IAuthentication _authentication;
         private static IContainer _container;
@@ -36,6 +36,7 @@ class Program
             builder.RegisterType<FakeFailedCounter>().As<IFailedCounter>();
             builder.RegisterType<AuthenticationService>().As<IAuthentication>();
 
+            builder.RegisterDecorator<LogMethodInfoDecorator, IAuthentication>();
             builder.RegisterDecorator<NotificationDecorator, IAuthentication>();
             builder.RegisterDecorator<FailedCounterDecorator, IAuthentication>();
             builder.RegisterDecorator<LogFailedCountDecorator, IAuthentication>();
