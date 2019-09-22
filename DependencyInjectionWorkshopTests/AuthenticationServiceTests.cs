@@ -38,11 +38,10 @@ namespace DependencyInjectionWorkshopTests
             _authentication = new AuthenticationService(_otpService, _profile, _hash);
             _authentication = new NotificationDecorator(_authentication, _notification);
             _authentication = new FailedCounterDecorator(_authentication, _failedCounter);
-            _authentication = new LogFailedCountDecorator(_authentication, _failedCounter, _logger);
+            _authentication = new LogFailedCountDecorator(_authentication, _logger, _failedCounter);
         }
         
-        
-[Test]
+        [Test]
         public void is_valid()
         {
             GivenPassword(DefaultAccountId, DefaultHashedPassword);
