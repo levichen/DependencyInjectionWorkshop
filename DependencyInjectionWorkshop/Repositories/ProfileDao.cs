@@ -2,11 +2,13 @@
 using System.Data.SqlClient;
 using System.Linq;
 using Dapper;
+using DependencyInjectionWorkshop.Models;
 
 namespace DependencyInjectionWorkshop.Repositories
 {
     public interface IProfile
     {
+        [AuditLog]
         string GetPassword(string accountId);
     }
 

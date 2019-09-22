@@ -35,7 +35,10 @@ namespace MyConsole
         {
             var builder = new ContainerBuilder();
 
-            builder.RegisterType<FakeProfile>().As<IProfile>();
+            builder.RegisterType<FakeProfile>().As<IProfile>()
+                   .EnableInterfaceInterceptors()
+                   .InterceptedBy(typeof(AuditLogInterceptor));
+
             builder.RegisterType<FakeHash>().As<IHash>();
             builder.RegisterType<FakeOtp>().As<IOtpService>();
             builder.RegisterType<FakeLogger>().As<ILogger>();
@@ -44,6 +47,7 @@ namespace MyConsole
 
 
             builder.RegisterType<AuthenticationService>().As<IAuthentication>()
+                   //.EnableClassInterceptors()
                    .EnableInterfaceInterceptors()
                    .InterceptedBy(typeof(AuditLogInterceptor));
 
