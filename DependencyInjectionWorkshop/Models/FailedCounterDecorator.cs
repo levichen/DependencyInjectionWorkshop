@@ -12,10 +12,14 @@ namespace DependencyInjectionWorkshop.Models
         public override bool Verify(string accountId, string inputPassword, string otp)
         {
             bool isValid = base.Verify(accountId, inputPassword, otp);
-            
+
             if (isValid)
             {
                 _failedCounter.ResetFailedCount(accountId);
+            }
+            else
+            {
+                _failedCounter.AddFailedCount(accountId);
             }
 
             return isValid;
