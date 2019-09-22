@@ -4,8 +4,8 @@
     {
         private readonly IFailedCounter _failedCounter;
 
-        public FailedCounterDecorator(IAuthentication authenticationService, IFailedCounter failedCounter) : base(
-            authenticationService)
+        public FailedCounterDecorator(IAuthentication authentication, IFailedCounter failedCounter) : base(
+            authentication)
         {
             _failedCounter = failedCounter;
         }
