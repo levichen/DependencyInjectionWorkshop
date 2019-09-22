@@ -2,12 +2,12 @@ namespace DependencyInjectionWorkshop.Models
 {
     public class NotificationDecorator: IAuthentication
     {
-        private readonly IAuthentication _authenticationService;
+        private readonly IAuthentication _authentication;
         private readonly INotification _notification;
 
-        public NotificationDecorator(IAuthentication authenticationService, INotification notification)
+        public NotificationDecorator(IAuthentication authentication, INotification notification)
         {
-            _authenticationService = authenticationService;
+            _authentication = authentication;
             _notification = notification;
         }
 
@@ -18,7 +18,7 @@ namespace DependencyInjectionWorkshop.Models
 
         public bool Verify(string accountId, string inputPassword, string otp)
         {
-            bool isValid = _authenticationService.Verify(accountId, inputPassword, otp);
+            bool isValid = _authentication.Verify(accountId, inputPassword, otp);
 
             if (!isValid)
             {

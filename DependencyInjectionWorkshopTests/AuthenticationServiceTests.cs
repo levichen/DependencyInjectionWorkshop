@@ -22,7 +22,7 @@ namespace DependencyInjectionWorkshopTests
         private IFailedCounter _failedCounter;
         private INotification _notification;
         private ILogger _logger;
-        private IAuthentication _authenticationService;
+        private IAuthentication _authentication;
 
         [SetUp]
         public void SetUp()
@@ -35,8 +35,8 @@ namespace DependencyInjectionWorkshopTests
             _notification = Substitute.For<INotification>();
             _logger = Substitute.For<ILogger>();
 
-            _authenticationService = new AuthenticationService(_failedCounter, _logger, _otpService, _profile, _hash);
-            _authenticationService = new NotificationDecorator(_authenticationService, _notification);
+            _authentication = new AuthenticationService(_failedCounter, _logger, _otpService, _profile, _hash);
+            _authentication = new NotificationDecorator(_authentication, _notification);
         }
         
         
@@ -169,7 +169,7 @@ namespace DependencyInjectionWorkshopTests
 
         private bool WhenVerify(string accountId, string password, string otp)
         {
-            return _authenticationService.Verify(accountId, password, otp);
+            return _authentication.Verify(accountId, password, otp);
         }
 
         private void GivenOtp(string accountId, string otp)
