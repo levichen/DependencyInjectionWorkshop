@@ -10,12 +10,21 @@
             _failedCounter = failedCounter;
         }
 
+        public void AddFailedCount(string accountId)
+        {
+            _failedCounter.AddFailedCount(accountId);
+        }
+
         public override bool Verify(string accountId, string password, string otp)
         {
             var isValid = base.Verify(accountId, password, otp);
             if (isValid)
             {
                 Reset(accountId);
+            }
+            else
+            {
+                AddFailedCount(accountId);
             }
 
             return isValid;

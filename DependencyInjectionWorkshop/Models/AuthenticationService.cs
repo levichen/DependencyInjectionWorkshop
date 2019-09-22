@@ -3,15 +3,10 @@ using System;
 
 namespace DependencyInjectionWorkshop.Models
 {
-    public interface IAuthentication
-    {
-        bool Verify(string accountId, string password, string otp);
-    }
-
     public class AuthenticationService : IAuthentication
     {
         private readonly IFailedCounter _failedCounter;
-        //private readonly FailedCounterDecorator _failedCounterDecorator;
+        private readonly FailedCounterDecorator _failedCounterDecorator;
         private readonly IHash _hash;
         private readonly ILogger _logger;
         private readonly IOtpService _otpService;
@@ -56,8 +51,6 @@ namespace DependencyInjectionWorkshop.Models
             }
             else
             {
-                _failedCounter.AddFailedCount(accountId);
-
                 var failedCount = _failedCounter.GetFailedCount(accountId);
                 _logger.Info($"accountId:{accountId} failed times:{failedCount}");
 
