@@ -32,7 +32,7 @@ namespace MyConsole
             builder.RegisterType<FakeProfile>().As<IProfile>();
             builder.RegisterType<FakeHash>().As<IHash>();
             builder.RegisterType<FakeOtp>().As<IOtpService>();
-            builder.RegisterType<NLogAdapter>().As<ILogger>();
+            builder.RegisterType<FakeLogger>().As<ILogger>();
             builder.RegisterType<FakeSlack>().As<INotification>();
             builder.RegisterType<FakeFailedCounter>().As<IFailedCounter>();
             builder.RegisterType<AuthenticationService>().As<IAuthentication>();
