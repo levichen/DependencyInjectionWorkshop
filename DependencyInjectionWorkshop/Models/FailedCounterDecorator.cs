@@ -11,18 +11,39 @@ namespace DependencyInjectionWorkshop.Models
 
         public override bool Verify(string accountId, string inputPassword, string otp)
         {
+            CheckAccountIsLocked(accountId);
+            
             bool isValid = base.Verify(accountId, inputPassword, otp);
 
             if (isValid)
             {
-                _failedCounter.ResetFailedCount(accountId);
+                ResetFailedCount(accountId);
             }
             else
             {
-                _failedCounter.AddFailedCount(accountId);
+                AddFailedCount(accountId);
             }
 
             return isValid;
+        }
+
+        private void AddFailedCount(string accountId)
+        {
+            _failedCounter.AddFailedCount(accountId);
+        }
+
+        private void ResetFailedCount(string accountId)
+        {
+            _failedCounter.ResetFailedCount(accountId);
+        }
+
+        private void CheckAccountIsLocked(string accountId)
+        {
+            var isLocked = _failedCounter.GetAccountIsLocked(accountId);
+            if (isLocked)
+            {
+                throw new FailedTooManyTimesException();
+            }
         }
     }
 }

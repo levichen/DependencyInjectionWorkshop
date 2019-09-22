@@ -40,15 +40,13 @@ namespace DependencyInjectionWorkshop.Models
             get { return _failedCounter; }
         }
 
+        public IFailedCounter FailedCounter1
+        {
+            get { return _failedCounter; }
+        }
+
         public bool Verify(string accountId, string inputPassword, string otp)
         {
-            // check is lock before verify
-            var isLocked = _failedCounter.GetAccountIsLocked(accountId);
-            if (isLocked)
-            {
-                throw new FailedTooManyTimesException();
-            }
-            
             var passwordFromDb = _profile.GetPassword(accountId);
             var hashedInputPassword = _hash.Compute(inputPassword);
             var currentOtp = _otpService.GetCurrentOtp(accountId);
