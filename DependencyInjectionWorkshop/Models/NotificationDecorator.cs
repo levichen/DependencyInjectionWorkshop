@@ -33,8 +33,7 @@ namespace DependencyInjectionWorkshop.Models
 
         public override bool Verify(string accountId, string inputPassword, string otp)
         {
-            bool isValid1 = base.Verify(accountId, inputPassword, otp);
-            var isValid = isValid1;
+            bool isValid = base.Verify(accountId, inputPassword, otp);
 
             if (!isValid)
             {
