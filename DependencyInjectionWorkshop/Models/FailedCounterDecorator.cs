@@ -10,13 +10,9 @@
             _failedCounter = failedCounter;
         }
 
-        public void AddFailedCount(string accountId)
-        {
-            _failedCounter.AddFailedCount(accountId);
-        }
-
         public override bool Verify(string accountId, string password, string otp)
         {
+            CheckAccountIsLocked(accountId);
             var isValid = base.Verify(accountId, password, otp);
             if (isValid)
             {
@@ -28,6 +24,20 @@
             }
 
             return isValid;
+        }
+
+        private void AddFailedCount(string accountId)
+        {
+            _failedCounter.AddFailedCount(accountId);
+        }
+
+        private void CheckAccountIsLocked(string accountId)
+        {
+            var isLocked = _failedCounter.GetAccountIsLocked(accountId);
+            if (isLocked)
+            {
+                throw new FailedTooManyTimesException();
+            }
         }
 
         private void Reset(string accountId)

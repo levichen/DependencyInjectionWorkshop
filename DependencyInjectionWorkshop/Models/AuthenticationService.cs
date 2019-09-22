@@ -31,13 +31,14 @@ namespace DependencyInjectionWorkshop.Models
             _logger = new NLogAdapter();
         }
 
+        public IFailedCounter FailedCounter
+        {
+            get { return _failedCounter; }
+        }
+
         public bool Verify(string accountId, string password, string otp)
         {
-            var isLocked = _failedCounter.GetAccountIsLocked(accountId);
-            if (isLocked)
-            {
-                throw new FailedTooManyTimesException();
-            }
+            //_failedCounterDecorator.CheckAccountIsLocked(accountId);
 
             var passwordFromDb = _profile.GetPassword(accountId);
 
