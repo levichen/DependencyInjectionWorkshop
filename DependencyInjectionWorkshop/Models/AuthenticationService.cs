@@ -15,6 +15,7 @@ namespace DependencyInjectionWorkshop.Models
         private readonly ILogger _logger;
         private readonly IOtpService _otpService;
         private readonly IProfile _profile;
+        private FailedCounterDecorator _failedCounterDecorator;
 
         public AuthenticationService(IFailedCounter failedCounter, ILogger logger, IOtpService otpService, IProfile profile, IHash hash)
         {
@@ -34,6 +35,11 @@ namespace DependencyInjectionWorkshop.Models
             _logger = new NLogAdapter();
         }
 
+        public IFailedCounter FailedCounter
+        {
+            get { return _failedCounter; }
+        }
+
         public bool Verify(string accountId, string inputPassword, string otp)
         {
             // check is lock before verify
@@ -49,9 +55,6 @@ namespace DependencyInjectionWorkshop.Models
 
             if (passwordFromDb == hashedInputPassword && otp == currentOtp)
             {
-                // login success, reset failed counter
-                _failedCounter.ResetFailedCount(accountId);
-
                 return true;
             }
             else
