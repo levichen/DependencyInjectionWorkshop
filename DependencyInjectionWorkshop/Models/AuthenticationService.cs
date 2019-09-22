@@ -11,6 +11,7 @@ namespace DependencyInjectionWorkshop.Models
     public class AuthenticationService : IAuthentication
     {
         private readonly IFailedCounter _failedCounter;
+        //private readonly FailedCounterDecorator _failedCounterDecorator;
         private readonly IHash _hash;
         private readonly ILogger _logger;
         private readonly IOtpService _otpService;
@@ -51,8 +52,6 @@ namespace DependencyInjectionWorkshop.Models
 
             if (passwordFromDb == hashedPassword && otp == currentOtp)
             {
-                _failedCounter.ResetFailedCount(accountId);
-
                 return true;
             }
             else
@@ -60,7 +59,7 @@ namespace DependencyInjectionWorkshop.Models
                 _failedCounter.AddFailedCount(accountId);
 
                 var failedCount = _failedCounter.GetFailedCount(accountId);
-                _logger.Info($"accountId:{accountId} failed times:{failedCount}"); 
+                _logger.Info($"accountId:{accountId} failed times:{failedCount}");
 
                 return false;
             }
