@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Autofac;
+using Autofac.Extras.DynamicProxy;
 using DependencyInjectionWorkshop.Models;
 using DependencyInjectionWorkshop.Repos;
 
@@ -18,33 +19,64 @@ namespace MyConsole
         static void Main(string[] args)
         {
             RegisterContainer();
+
+            Console.WriteLine("who are you?");
+            var name = Console.ReadLine();
+            var context = _container.Resolve<IContext>();
+            context.SetCurrentUser(new Account() {Name = name});
+
             _authentication = _container.Resolve<IAuthentication>();
-            
-            var isValid = _authentication.Verify("joey", "abc", "123456");
+
+            var isValid = _authentication.Verify("joey", "abc", "wrong otp");
             Console.WriteLine($"result:{isValid}");
         }
-        
-        private static void RegisterContainer() 
+
+        private static void RegisterContainer()
         {
             var builder = new ContainerBuilder();
-            
+
             builder.RegisterType<FakeProfile>().As<IProfile>();
             builder.RegisterType<FakeHash>().As<IHash>();
             builder.RegisterType<FakeOtp>().As<IOtpService>();
             builder.RegisterType<FakeLogger>().As<ILogger>();
             builder.RegisterType<FakeSlack>().As<INotification>();
             builder.RegisterType<FakeFailedCounter>().As<IFailedCounter>();
-            builder.RegisterType<AuthenticationService>().As<IAuthentication>();
 
-            builder.RegisterDecorator<LogMethodInfoDecorator, IAuthentication>();
+
+            builder.RegisterType<AuthenticationService>().As<IAuthentication>()
+                   .EnableInterfaceInterceptors()
+                   .InterceptedBy(typeof(AuditLogInterceptor));
+
+            builder.RegisterType<MyContext>().As<IContext>().SingleInstance();
+            builder.RegisterType<AuditLogInterceptor>();
+
             builder.RegisterDecorator<NotificationDecorator, IAuthentication>();
             builder.RegisterDecorator<FailedCounterDecorator, IAuthentication>();
             builder.RegisterDecorator<LogFailedCountDecorator, IAuthentication>();
+            //builder.RegisterDecorator<AuditLogDecorator, IAuthentication>();
 
-            _container = builder.Build();
+            //_authentication = new NotificationDecorator(_authentication, _notification);
+            //_authentication = new FailedCounterDecorator(_authentication, _failedCounter);
+            //_authentication = new LogFailedCountDecorator(_authentication, _logger, _failedCounter);
+            var container = builder.Build();
+            _container = container;
         }
     }
 
+    public class MyContext : IContext
+    {
+        private Account _account;
+
+        public Account GetCurrentUser()
+        {
+            return _account;
+        }
+
+        public void SetCurrentUser(Account account)
+        {
+            _account = account;
+        }
+    }
 
     internal class FakeLogger : ILogger
     {
