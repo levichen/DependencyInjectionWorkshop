@@ -17,7 +17,7 @@ namespace DependencyInjectionWorkshopTests
         private IFailedCounter _failedCounter;
         private ILogger _logger;
         private INotification _notification;
-        private IAuthenticationService _authentication;
+        private IAuthentication _authentication;
         private const string DefaultAccountId = "levi";
         private const string DefaultPassword = "abc";
         private const string DefaultHashedPassword = "hashed password";
@@ -35,7 +35,7 @@ namespace DependencyInjectionWorkshopTests
             _logger = Substitute.For<ILogger>();
             _notification = Substitute.For<INotification>();
             
-            _authentication = new AuthenticationService(_profileDao, _sha256Adapter, _otpService);
+            _authentication = new Authentication(_profileDao, _sha256Adapter, _otpService);
             _authentication = new NotificationDecorator(_authentication, _notification);
             _authentication = new FailedCounterDecorator(_authentication, _failedCounter);
             _authentication = new LogFailedCountDecorator(_authentication, _failedCounter, _logger);

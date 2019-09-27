@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Autofac;
+using Autofac.Extras.DynamicProxy;
 using DependencyInjectionWorkshop.Models;
 using DependencyInjectionWorkshop.Repos;
 
@@ -10,32 +12,47 @@ namespace MyConsole
 {
     class Program
     {
-        private static INotification _notification;
-        private static ILogger _logger;
-        private static IFailedCounter _failedCounter;
-        private static IOtpService _optService;
-        private static IHash _hash;
-        private static IProfile _profile;
-        private static IAuthenticationService _authentication;
+        private static IContainer _container;
+        private static IAuthentication _authentication;
 
         static void Main(string[] args)
         {
-            _notification = new FakeSlack();
-            _logger = new FakeLogger();
-            _failedCounter = new FakeFailedCounter();
+            RegisterContainer();
             
-            _optService = new FakeOtp();
-            _hash = new FakeHash();
-            _profile = new FakeProfile();
-            
-            _authentication = new AuthenticationService(_profile, _hash, _optService);
-            
-            _authentication = new NotificationDecorator(_authentication, _notification);
-            _authentication = new FailedCounterDecorator(_authentication, _failedCounter);
-            _authentication = new LogFailedCountDecorator(_authentication, _failedCounter, _logger);
+            Console.WriteLine("who are you?");
+            var name = Console.ReadLine();
+            var context = _container.Resolve<IContext>();
+            context.SetCurrentUser(new Account() {Name = name});
 
-            bool isValid = _authentication.Verify("joey", "abc", "123456");
+            _authentication = _container.Resolve<IAuthentication>();
+
+            bool isValid = _authentication.Verify("joey", "abc", "wrong");
             Console.WriteLine($"Console Result: {isValid}");
+        }
+        
+        private static void RegisterContainer()
+        {
+            var builder = new ContainerBuilder();
+            
+            builder.RegisterType<FakeProfile>().As<IProfile>();
+            builder.RegisterType<FakeHash>().As<IHash>();
+            builder.RegisterType<FakeOtp>().As<IOtpService>();
+            builder.RegisterType<FakeLogger>().As<ILogger>();
+            builder.RegisterType<FakeSlack>().As<INotification>();
+            builder.RegisterType<FakeFailedCounter>().As<IFailedCounter>();
+
+            builder.RegisterType<Authentication>().As<IAuthentication>()
+                .EnableInterfaceInterceptors()
+                .InterceptedBy(typeof(AuditLogInterceptor));
+
+            builder.RegisterType<MyContext>().As<IContext>().SingleInstance();
+            builder.RegisterType<AuditLogInterceptor>();
+
+            builder.RegisterDecorator<NotificationDecorator, IAuthentication>();
+            builder.RegisterDecorator<FailedCounterDecorator, IAuthentication>();
+            builder.RegisterDecorator<LogFailedCountDecorator, IAuthentication>();
+
+            _container = builder.Build();
         }
     }
 

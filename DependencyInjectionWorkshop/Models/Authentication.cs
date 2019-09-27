@@ -4,13 +4,13 @@ using DependencyInjectionWorkshop.Repos;
 
 namespace DependencyInjectionWorkshop.Models
 {
-    public class AuthenticationService : IAuthenticationService
+    public class Authentication : IAuthentication
     {
         private readonly IProfile _profileDao;
         private readonly IHash _sha256Adapter;
         private readonly IOtpService _otpService;
 
-        public AuthenticationService(IProfile profileDao, IHash sha256Adapter, IOtpService otpService)
+        public Authentication(IProfile profileDao, IHash sha256Adapter, IOtpService otpService)
         {
             _profileDao = profileDao;
             _sha256Adapter = sha256Adapter;
