@@ -12,7 +12,6 @@ namespace DependencyInjectionWorkshop.Models
         private readonly IOtpService _otpService;
         private readonly ILogger _logAdapter;
 
-
         public AuthenticationService(IProfile profileDao, IFailedCounter failedCounter, IHash sha256Adapter, IOtpService otpService, ILogger logAdapter)
         {
             _profileDao = profileDao;

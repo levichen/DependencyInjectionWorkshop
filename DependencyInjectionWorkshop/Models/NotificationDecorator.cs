@@ -1,14 +1,15 @@
+using System.Net.Sockets;
+
 namespace DependencyInjectionWorkshop.Models
 {
-    public class NotificationDecorator: IAuthenticationService
+    public class NotificationDecorator: AuthenticationDecoratorBase
     {
-        private readonly IAuthenticationService _authentication;
         private readonly INotification _notification;
 
-        public NotificationDecorator(IAuthenticationService authentication, INotification notification)
+        public NotificationDecorator(IAuthenticationService authentication, INotification notification): base
+            (authentication)
         {
             _notification = notification;
-            _authentication = authentication;
         }
 
         private void Send(string accountId)
@@ -16,13 +17,13 @@ namespace DependencyInjectionWorkshop.Models
             _notification.Send(accountId);
         }
 
-        public bool Verify(string accountId, string inputPassword, string otp)
+        public override bool Verify(string accountId, string inputPassword, string otp)
         {
-            var isValid = _authentication.Verify(accountId, inputPassword, otp);
+            bool isValid = base.Verify(accountId, inputPassword, otp);
 
             if (!isValid)
             {
-                Send(accountId);
+               _notification.Send(accountId); 
             }
 
             return isValid;
