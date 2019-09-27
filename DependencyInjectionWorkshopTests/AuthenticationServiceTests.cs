@@ -17,7 +17,7 @@ namespace DependencyInjectionWorkshopTests
         private IFailedCounter _failedCounter;
         private ILogger _logger;
         private INotification _notification;
-        private IAuthenticationService _authenticationService;
+        private IAuthenticationService _authentication;
         private const string DefaultAccountId = "levi";
         private const string DefaultPassword = "abc";
         private const string DefaultHashedPassword = "hashed password";
@@ -35,8 +35,8 @@ namespace DependencyInjectionWorkshopTests
             _logger = Substitute.For<ILogger>();
             _notification = Substitute.For<INotification>();
             
-            _authenticationService = new AuthenticationService(_profileDao, _failedCounter, _sha256Adapter, _otpService, _logger);
-            _authenticationService = new NotificationDecorator(_authenticationService, _notification);
+            _authentication = new AuthenticationService(_profileDao, _failedCounter, _sha256Adapter, _otpService, _logger);
+            _authentication = new NotificationDecorator(_authentication, _notification);
         }
 
         [Test]
@@ -152,7 +152,7 @@ namespace DependencyInjectionWorkshopTests
 
         private bool WhenVerify(string accountId, string password, string otp)
         {
-            return _authenticationService.Verify(accountId, password, otp);
+            return _authentication.Verify(accountId, password, otp);
         }
 
         private void GivenOtp(string accountId, string opt)
