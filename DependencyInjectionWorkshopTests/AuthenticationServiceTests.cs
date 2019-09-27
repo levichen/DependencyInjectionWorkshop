@@ -1,8 +1,8 @@
-﻿using System;
-using DependencyInjectionWorkshop.Models;
+﻿using DependencyInjectionWorkshop.Models;
 using DependencyInjectionWorkshop.Repositories;
 using NSubstitute;
 using NUnit.Framework;
+using System;
 
 namespace DependencyInjectionWorkshopTests
 {
@@ -14,7 +14,7 @@ namespace DependencyInjectionWorkshopTests
         private const string DefaultInputPassword = "abc";
         private const string DefaultOtp = "123456";
         private const int DefaultFailedCount = 88;
-        private AuthenticationService _authenticationService;
+        private IAuthentication _authentication;
         private IFailedCounter _failedCounter;
         private IHash _hash;
         private ILogger _logger;
@@ -31,8 +31,12 @@ namespace DependencyInjectionWorkshopTests
             _otpService = Substitute.For<IOtpService>();
             _hash = Substitute.For<IHash>();
             _profile = Substitute.For<IProfile>();
-            _authenticationService =
-                new AuthenticationService(_failedCounter, _logger, _otpService, _profile, _hash, _notification);
+            _authentication =
+                new AuthenticationService(_otpService, _profile, _hash);
+
+            _authentication = new NotificationDecorator(_authentication, _notification);
+            _authentication = new FailedCounterDecorator(_authentication, _failedCounter);
+            _authentication = new LogFailedCountDecorator(_authentication, _logger, _failedCounter);
         }
 
         [Test]
@@ -164,7 +168,7 @@ namespace DependencyInjectionWorkshopTests
 
         private bool WhenVerify(string accountId, string password, string otp)
         {
-            return _authenticationService.Verify(accountId, password, otp);
+            return _authentication.Verify(accountId, password, otp);
         }
 
         private void GivenOtp(string accountId, string otp)
